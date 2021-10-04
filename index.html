@@ -4,7 +4,7 @@
 <head>
     <script src="https://miro.com/app/static/sdk.1.1.js"></script>
     <script>
-    let panelOpen = false;
+    let loadCount = 0;
     let checkLinesTo = true;
     let checkLinesFrom = true;
 
@@ -13,36 +13,34 @@
 
 
     let getLinesTo = async function(lines) {
-        console.log(lines)
+        loadCount++;
         let objects = [];
         for (const line in lines) {
-            console.log(lines[line])
             let object = await miro.board.widgets.get({ id: lines[line].startWidgetId });
             objects.push(object[0])
         }
         highlightLinesWorker(objects);
+        loadCount--;
     }
 
     let getLinesFrom = async function(lines) {
-        console.log(lines)
+        loadCount++;
         let objects = [];
         for (const line in lines) {
-            console.log(lines[line])
             let object = await miro.board.widgets.get({ id: lines[line].endWidgetId });
             objects.push(object[0])
         }
         highlightLinesWorker(objects);
+        loadCount--;
     }
 
     let highlightLinesWorker = async function(selectedObjects) {
+        miro.board.ui.openBottomPanel("loader.html", { width: 120 });
         let linesTo = [];
         let linesFrom = [];
-        console.log(selectedObjects)
         if (selectedObjects.length > 0) {
             for (const object in selectedObjects) {
 
-                // var ob = await miro.board.widgets.get({id:selectedObjects[object].id})
-                // console.log(ob)
                 let objectId = selectedObjects[object].id;
 
                 let linesToTemp = await miro.board.widgets.get({ type: 'line', endWidgetId: objectId });
@@ -57,46 +55,50 @@
                 })
             }
             if (linesFrom.length > 0 && checkLinesFrom) {
-                console.log(linesFrom.length + " lines from objects")
+                //console.log(linesFrom.length + " lines from objects")
                 for (const line in linesFrom) {
                     linesFrom[line].clientVisible = true
                     linesFrom[line].style = { 'lineColor': '#8fd14f', 'lineThickness': 5 }
                 }
-                if(propagateFrom){
-                  getLinesFrom(linesFrom);
+                if (propagateFrom) {
+                    getLinesFrom(linesFrom);
                 }
                 await miro.board.widgets.bringForward(linesFrom)
                 await miro.board.widgets.update(linesFrom)
             } else {
-                console.log("No lines from objects")
+                //console.log("No lines from objects")
             }
             if (linesTo.length > 0 && checkLinesTo) {
-                console.log(linesTo.length + " lines to objects")
+                //console.log(linesTo.length + " lines to objects")
                 for (const line in linesTo) {
                     linesTo[line].clientVisible = true
                     linesTo[line].style = { 'lineColor': '#f24726', 'lineThickness': 5 }
                 }
-                if(propagateTo){
-                  getLinesTo(linesTo);
+                if (propagateTo) {
+                    getLinesTo(linesTo);
                 }
                 await miro.board.widgets.bringForward(linesTo)
                 await miro.board.widgets.update(linesTo)
             } else {
-                console.log("No lines to objects")
+                //console.log("No lines to objects")
             }
         } else {
-            console.log("No component selected")
+            //console.log("No component selected")
+        }
+        if (loadCount == 0) {
+            miro.board.ui.closeBottomPanel()
         }
     }
 
     let highlightLines = async function() {
-        console.log("Connections are getting highlighted, please wait...");
+        //console.log("Connections are getting highlighted, please wait...");
         let selectedObjects = await miro.board.selection.get()
         highlightLinesWorker(selectedObjects);
     }
 
     let resetLines = async function() {
-        console.log("Highlighting will be resetted, please wait...");
+        //console.log("Highlighting will be resetted, please wait...");
+        miro.board.ui.openBottomPanel("loader.html", { width: 120 });
         let lines = await miro.board.widgets.get({ type: 'line', clientVisible: true });
         lines.forEach(line => {
             line.style = { 'lineColor': '#808080', 'lineThickness': 1 }
@@ -104,69 +106,54 @@
         })
         miro.board.widgets.sendBackward(lines)
         miro.board.widgets.update(lines)
+        miro.board.ui.closeBottomPanel()
     }
-    // document.getElementById("btn_hide").addEventListener("click", function() {
-    //     resetLines();
-    // });
-    let updatePropagation = function(){
-      if(!propagateFrom && propagateTo){
-        checkLinesFrom = false;
-      }else{
-        checkLinesFrom = true;
-      }
-      if(propagateFrom && !propagateTo){
-        checkLinesTo = false;
-      }else{
-        checkLinesTo = true;
-      }
-    }
+
     miro.onReady(() => {
         miro.initialize({
             extensionPoints: {
                 bottomBar: {
                     title: 'Hide All Lines',
-                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>', 
+                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>',
                     onClick: () => {
-                      resetLines();
+                        resetLines();
                     }
                 },
                 getWidgetMenuItems: (widgets) => {
                     return Promise.resolve([{
-                        tooltip: 'Show Direct Connections',
-                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M13 11C13 12.6569 11.6569 14 10 14C8.34315 14 7 12.6569 7 11C7 9.34315 8.34315 8 10 8C11.6569 8 13 9.34315 13 11Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 4L4.75926 3.34921L10.7593 10.3492L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L18 5L18.6 5.8L10.6 11.8L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M11 11L19 15L18.5528 15.8944L10.5528 11.8944L11 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L13 20L12.0513 20.3162L9.05132 11.3162L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 19L3.2 18.4L9.2 10.4L10 11Z" fill="#050038"/> <circle cx="10" cy="11" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg>', 
+                        tooltip: 'trace direct connections',
+                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M13 11C13 12.6569 11.6569 14 10 14C8.34315 14 7 12.6569 7 11C7 9.34315 8.34315 8 10 8C11.6569 8 13 9.34315 13 11Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 4L4.75926 3.34921L10.7593 10.3492L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L18 5L18.6 5.8L10.6 11.8L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M11 11L19 15L18.5528 15.8944L10.5528 11.8944L11 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L13 20L12.0513 20.3162L9.05132 11.3162L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 19L3.2 18.4L9.2 10.4L10 11Z" fill="#050038"/> <circle cx="10" cy="11" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg>',
                         onClick: (widgets) => {
-                            console.log('onClick', widgets)
+                            //console.log('onClick', widgets)
                             checkLinesFrom = true;
                             checkLinesTo = true;
                             propagateTo = false;
                             propagateFrom = false;
                             highlightLines();
                         }
-                    },{
-                        tooltip: 'Trace Up',
-                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 4L4.75926 3.34921L10.7593 10.3492L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L18 5L18.6 5.8L10.6 11.8L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L13 20L12.0513 20.3162L9.05132 11.3162L10 11Z" fill="#050038"/> <circle cx="12.2" cy="20.2" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>', 
+                    }, {
+                        tooltip: 'trace up',
+                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 4L4.75926 3.34921L10.7593 10.3492L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L18 5L18.6 5.8L10.6 11.8L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L13 20L12.0513 20.3162L9.05132 11.3162L10 11Z" fill="#050038"/> <circle cx="12.2" cy="20.2" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>',
                         onClick: (widgets) => {
-                            console.log('onClick', widgets)
+                            //console.log('onClick', widgets)
                             checkLinesFrom = false;
                             checkLinesTo = true;
                             propagateTo = true;
                             propagateFrom = false;
                             highlightLines();
                         }
-                    },{
-                        tooltip: 'Trace Down',
-                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 4L4.75926 3.34921L10.7593 10.3492L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M11 11L19 15L18.5528 15.8944L10.5528 11.8944L11 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L13 20L12.0513 20.3162L9.05132 11.3162L10 11Z" fill="#050038"/> <circle cx="4.5" cy="3.5" r="2.5" fill="#C4C4C4"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> <circle cx="5" cy="4" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg> ', 
+                    }, {
+                        tooltip: 'trace down',
+                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="24" height="24" fill="white"/> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L4 4L4.75926 3.34921L10.7593 10.3492L10 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M11 11L19 15L18.5528 15.8944L10.5528 11.8944L11 11Z" fill="#050038"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M10 11L13 20L12.0513 20.3162L9.05132 11.3162L10 11Z" fill="#050038"/> <circle cx="4.5" cy="3.5" r="2.5" fill="#C4C4C4"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> <circle cx="5" cy="4" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg> ',
                         onClick: (widgets) => {
-                            console.log('onClick', widgets)
+                            //console.log('onClick', widgets)
                             checkLinesFrom = true;
                             checkLinesTo = false;
                             propagateTo = false;
                             propagateFrom = true;
-                            updatePropagation();
                             highlightLines();
                         }
-                    }
-                    ])
+                    }])
                 }
             }
         })
