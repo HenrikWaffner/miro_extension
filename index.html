@@ -1,3 +1,5 @@
+<!-- Reload Plugin reloadSandbox();-->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -108,17 +110,9 @@
         miro.board.widgets.update(lines)
         miro.board.ui.closeBottomPanel()
     }
-
-    miro.onReady(() => {
-        miro.initialize({
+    let initFunctions = function(){
+      miro.initialize({
             extensionPoints: {
-                bottomBar: {
-                    title: 'Hide All Lines',
-                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>',
-                    onClick: () => {
-                        resetLines();
-                    }
-                },
                 getWidgetMenuItems: (widgets) => {
                     return Promise.resolve([{
                         tooltip: 'trace direct connections',
@@ -153,10 +147,35 @@
                             propagateFrom = true;
                             highlightLines();
                         }
-                    }])
+                    },{
+                    tooltip: 'hide all lines',
+                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>',
+                    onClick: () => {
+                        resetLines();
+                    }
+                  }])
                 }
             }
         })
+    }
+    let initPlugin = function(){
+      miro.initialize({
+            extensionPoints: {
+                bottomBar: {
+                    title: 'Enable Tracy',
+                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.5 4.5L12 7L21.5 4.5" stroke="#050038"/> <path d="M12 7L13.5 20.5" stroke="#050038"/> <path d="M5 4.5C5 5.88071 3.88071 7 2.5 7C1.11929 7 0 5.88071 0 4.5C0 3.11929 1.11929 2 2.5 2C3.88071 2 5 3.11929 5 4.5Z" fill="#050038"/> <path d="M24 4.5C24 5.88071 22.8807 7 21.5 7C20.1193 7 19 5.88071 19 4.5C19 3.11929 20.1193 2 21.5 2C22.8807 2 24 3.11929 24 4.5Z" fill="#050038"/> <path d="M16 20.5C16 21.8807 14.8807 23 13.5 23C12.1193 23 11 21.8807 11 20.5C11 19.1193 12.1193 18 13.5 18C14.8807 18 16 19.1193 16 20.5Z" fill="#050038"/> <circle cx="12" cy="7" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg>', onClick: () => {
+                      var r = confirm("Enable Tracy?");
+                      if (r == true) {
+                        initFunctions();
+                      }
+                    }
+                }
+              }
+            })
+      resetLines();
+    }
+    miro.onReady(() => {
+        initPlugin();
     })
     </script>
 </head>
