@@ -164,7 +164,7 @@
                 bottomBar: {
                     title: 'Enable Tracy',
                     svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.5 4.5L12 7L21.5 4.5" stroke="#050038"/> <path d="M12 7L13.5 20.5" stroke="#050038"/> <path d="M5 4.5C5 5.88071 3.88071 7 2.5 7C1.11929 7 0 5.88071 0 4.5C0 3.11929 1.11929 2 2.5 2C3.88071 2 5 3.11929 5 4.5Z" fill="#050038"/> <path d="M24 4.5C24 5.88071 22.8807 7 21.5 7C20.1193 7 19 5.88071 19 4.5C19 3.11929 20.1193 2 21.5 2C22.8807 2 24 3.11929 24 4.5Z" fill="#050038"/> <path d="M16 20.5C16 21.8807 14.8807 23 13.5 23C12.1193 23 11 21.8807 11 20.5C11 19.1193 12.1193 18 13.5 18C14.8807 18 16 19.1193 16 20.5Z" fill="#050038"/> <circle cx="12" cy="7" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg>', onClick: () => {
-                      var r = confirm("Enable Tracy?");
+                      var r = confirm("Are you sure you want to enable Tracy? This is an experimental plugin to hide and highlight connections of selected objects in Miro. In some cases, this may slow down the performace of Miro or lead to some unintended changes in your board. So please make sure you only use this in a board where permanent changes to lines and connections are not an issue.");
                       if (r == true) {
                         initFunctions();
                       }
