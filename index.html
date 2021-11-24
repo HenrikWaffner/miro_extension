@@ -1,15 +1,15 @@
 <!-- Reload Plugin reloadSandbox();-->
-
 <!-- https://miro.com/oauth/authorize/?response_type=code&client_id=3074457364714057684&redirect_uri=%2Fconfirm-app-install%2F -->
-
 <!DOCTYPE html>
 <html lang="en">
+
 
 <head>
     <script src="https://miro.com/app/static/sdk.1.1.js"></script>
     <script>
+    let activatedExtension = false;
     let inspectedObjects = {};
-    
+
     let loadCount = 0;
     let checkLinesTo = true;
     let checkLinesFrom = true;
@@ -19,13 +19,14 @@
 
 
     let getLinesTo = async function(lines) {
+
         loadCount++;
         let objects = [];
         for (const line in lines) {
             let object = await miro.board.widgets.get({ id: lines[line].startWidgetId });
             console.log(typeof inspectedObjects[object[0].id])
-            if(typeof inspectedObjects[object[0].id] == "undefined"){
-                inspectedObjects[object[0].id] = {"checked": true};
+            if (typeof inspectedObjects[object[0].id] == "undefined") {
+                inspectedObjects[object[0].id] = { "checked": true };
                 objects.push(object[0])
             }
         }
@@ -39,8 +40,8 @@
         for (const line in lines) {
             let object = await miro.board.widgets.get({ id: lines[line].endWidgetId });
             console.log(typeof inspectedObjects[object[0].id])
-            if(typeof inspectedObjects[object[0].id] == "undefined"){
-                inspectedObjects[object[0].id] = {"checked": true};
+            if (typeof inspectedObjects[object[0].id] == "undefined") {
+                inspectedObjects[object[0].id] = { "checked": true };
                 objects.push(object[0])
             }
         }
@@ -54,47 +55,48 @@
         let linesFrom = [];
         if (selectedObjects.length > 0) {
             for (const object in selectedObjects) {
+                if (selectedObjects[object].type == 'IMAGE' || selectedObjects[object].type == 'STICKER') {
+                    let objectId = selectedObjects[object].id;
 
-                let objectId = selectedObjects[object].id;
+                    let linesToTemp = await miro.board.widgets.get({ type: 'line', endWidgetId: objectId });
 
-                let linesToTemp = await miro.board.widgets.get({ type: 'line', endWidgetId: objectId });
+                    let linesFromTemp = await miro.board.widgets.get({ type: 'line', startWidgetId: objectId });
 
-                let linesFromTemp = await miro.board.widgets.get({ type: 'line', startWidgetId: objectId });
-
-                linesToTemp.forEach(line => {
-                    linesTo.push(line)
-                })
-                linesFromTemp.forEach(line => {
-                    linesFrom.push(line)
-                })
-            }
-            if (linesFrom.length > 0 && checkLinesFrom) {
-                //console.log(linesFrom.length + " lines from objects")
-                for (const line in linesFrom) {
-                    linesFrom[line].clientVisible = true
-                    linesFrom[line].style = { 'lineColor': '#8fd14f', 'lineThickness': 5 }
+                    linesToTemp.forEach(line => {
+                        linesTo.push(line)
+                    })
+                    linesFromTemp.forEach(line => {
+                        linesFrom.push(line)
+                    })
                 }
-                if (propagateFrom) {
-                    getLinesFrom(linesFrom);
+                if (linesFrom.length > 0 && checkLinesFrom) {
+                    //console.log(linesFrom.length + " lines from objects")
+                    for (const line in linesFrom) {
+                        linesFrom[line].clientVisible = true
+                        linesFrom[line].style = { 'lineColor': '#8fd14f', 'lineThickness': 5 }
+                    }
+                    if (propagateFrom) {
+                        getLinesFrom(linesFrom);
+                    }
+                    await miro.board.widgets.bringForward(linesFrom)
+                    await miro.board.widgets.update(linesFrom)
+                } else {
+                    //console.log("No lines from objects")
                 }
-                await miro.board.widgets.bringForward(linesFrom)
-                await miro.board.widgets.update(linesFrom)
-            } else {
-                //console.log("No lines from objects")
-            }
-            if (linesTo.length > 0 && checkLinesTo) {
-                //console.log(linesTo.length + " lines to objects")
-                for (const line in linesTo) {
-                    linesTo[line].clientVisible = true
-                    linesTo[line].style = { 'lineColor': '#f24726', 'lineThickness': 5 }
+                if (linesTo.length > 0 && checkLinesTo) {
+                    //console.log(linesTo.length + " lines to objects")
+                    for (const line in linesTo) {
+                        linesTo[line].clientVisible = true
+                        linesTo[line].style = { 'lineColor': '#f24726', 'lineThickness': 5 }
+                    }
+                    if (propagateTo) {
+                        getLinesTo(linesTo);
+                    }
+                    await miro.board.widgets.bringForward(linesTo)
+                    await miro.board.widgets.update(linesTo)
+                } else {
+                    //console.log("No lines to objects")
                 }
-                if (propagateTo) {
-                    getLinesTo(linesTo);
-                }
-                await miro.board.widgets.bringForward(linesTo)
-                await miro.board.widgets.update(linesTo)
-            } else {
-                //console.log("No lines to objects")
             }
         } else {
             //console.log("No component selected")
@@ -110,7 +112,7 @@
         let selectedObjects = await miro.board.selection.get()
         selectedObjects.forEach(object => {
             console.log(object.id)
-            inspectedObjects[object.id] = {"checked": true};
+            inspectedObjects[object.id] = { "checked": true };
         })
         highlightLinesWorker(selectedObjects);
     }
@@ -127,8 +129,8 @@
         miro.board.widgets.update(lines)
         miro.board.ui.closeBottomPanel()
     }
-    let initFunctions = function(){
-      miro.initialize({
+    let initFunctions = function() {
+        miro.initialize({
             extensionPoints: {
                 getWidgetMenuItems: (widgets) => {
                     return Promise.resolve([{
@@ -164,32 +166,37 @@
                             propagateFrom = true;
                             highlightLines();
                         }
-                    },{
-                    tooltip: 'hide all lines',
-                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>',
-                    onClick: () => {
-                        resetLines();
-                    }
-                  }])
+                    }, {
+                        tooltip: 'hide all lines',
+                        svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M7 3.5C7 4.88071 5.88071 6 4.5 6C3.11929 6 2 4.88071 2 3.5C2 2.11929 3.11929 1 4.5 1C5.88071 1 7 2.11929 7 3.5Z" fill="#050038"/> <path d="M21 5.5C21 6.88071 19.8807 8 18.5 8C17.1193 8 16 6.88071 16 5.5C16 4.11929 17.1193 3 18.5 3C19.8807 3 21 4.11929 21 5.5Z" fill="#050038"/> <path d="M22 15.5C22 16.8807 20.8807 18 19.5 18C18.1193 18 17 16.8807 17 15.5C17 14.1193 18.1193 13 19.5 13C20.8807 13 22 14.1193 22 15.5Z" fill="#050038"/> <path d="M15 20.5C15 21.8807 13.8807 23 12.5 23C11.1193 23 10 21.8807 10 20.5C10 19.1193 11.1193 18 12.5 18C13.8807 18 15 19.1193 15 20.5Z" fill="#050038"/> <path d="M7 17.5C7 18.8807 5.88071 20 4.5 20C3.11929 20 2 18.8807 2 17.5C2 16.1193 3.11929 15 4.5 15C5.88071 15 7 16.1193 7 17.5Z" fill="#050038"/> <circle cx="10" cy="11" r="2.5" fill="#050038"/> </svg>',
+                        onClick: () => {
+                            resetLines();
+                        }
+                    }])
                 }
             }
         })
     }
-    let initPlugin = function(){
-      miro.initialize({
+    let initPlugin = function() {
+        miro.initialize({
             extensionPoints: {
                 bottomBar: {
                     title: 'Enable Tracy',
-                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.5 4.5L12 7L21.5 4.5" stroke="#050038"/> <path d="M12 7L13.5 20.5" stroke="#050038"/> <path d="M5 4.5C5 5.88071 3.88071 7 2.5 7C1.11929 7 0 5.88071 0 4.5C0 3.11929 1.11929 2 2.5 2C3.88071 2 5 3.11929 5 4.5Z" fill="#050038"/> <path d="M24 4.5C24 5.88071 22.8807 7 21.5 7C20.1193 7 19 5.88071 19 4.5C19 3.11929 20.1193 2 21.5 2C22.8807 2 24 3.11929 24 4.5Z" fill="#050038"/> <path d="M16 20.5C16 21.8807 14.8807 23 13.5 23C12.1193 23 11 21.8807 11 20.5C11 19.1193 12.1193 18 13.5 18C14.8807 18 16 19.1193 16 20.5Z" fill="#050038"/> <circle cx="12" cy="7" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg>', onClick: () => {
-                      var r = confirm("This is an experimental extension for hiding and highlighting paths. Only proceed if you know what this is. Otherwise THIS MIGHT MESS UP YOUR BOARD. More info https://github.com/HenrikWaffner/tracy_for_miro");
-                      if (r == true) {
-                        //resetLines();
-                        initFunctions();
-                      }
+                    svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M2.5 4.5L12 7L21.5 4.5" stroke="#050038"/> <path d="M12 7L13.5 20.5" stroke="#050038"/> <path d="M5 4.5C5 5.88071 3.88071 7 2.5 7C1.11929 7 0 5.88071 0 4.5C0 3.11929 1.11929 2 2.5 2C3.88071 2 5 3.11929 5 4.5Z" fill="#050038"/> <path d="M24 4.5C24 5.88071 22.8807 7 21.5 7C20.1193 7 19 5.88071 19 4.5C19 3.11929 20.1193 2 21.5 2C22.8807 2 24 3.11929 24 4.5Z" fill="#050038"/> <path d="M16 20.5C16 21.8807 14.8807 23 13.5 23C12.1193 23 11 21.8807 11 20.5C11 19.1193 12.1193 18 13.5 18C14.8807 18 16 19.1193 16 20.5Z" fill="#050038"/> <circle cx="12" cy="7" r="2.25" fill="white" stroke="#050038" stroke-width="1.5"/> </svg>',
+                    onClick: () => {
+                        if(!activatedExtension){
+                             var r = confirm("This is an experimental extension for hiding and highlighting paths. Only proceed if you know what this is. Otherwise THIS MIGHT MESS UP YOUR BOARD. More info https://github.com/ardoq/tracy_for_miro");
+                             if (r == true) {
+                                initFunctions();
+                                activatedExtension = true;
+                            }
+                        }else{
+                            alert("You already activated the extension. Select one or more elements to access the functions. If nothing happens, make sure you've activated the extension for your personal Miro account. More info https://github.com/ardoq/tracy_for_miro")
+                        }
                     }
                 }
-              }
-            })
+            }
+        })
     }
     miro.onReady(() => {
         initPlugin();
